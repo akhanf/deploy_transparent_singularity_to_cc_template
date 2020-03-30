@@ -1,0 +1,52 @@
+# trigger this workflow when create a release manually
+#
+# steps:
+#   setup ssh on runner
+#   scp .deploy_scripts folder to user@host:~
+#   run .deploy_scripts/deploy_dockerhub_image_to_transparent_singularity_on_remote.sh on remote
+#   test deploy
+#
+# require: github secretes
+#     SSH_KEY_GRAHAM
+#     note:SSH_KEY_GRAHAM is private key, the paired public key should be on REMOTE_HOST
+
+name: deploy_to_cc_and_test
+on:
+  release:
+    types: [published]
+jobs:
+  deploy_to_cc:
+    runs-on: ubuntu-18.04
+    env:
+      # change these variables to yours
+      REMOTE_USER: yinglilu
+      REMOTE_HOST: graham.sharcnet.ca
+      REMOTE_SINGULARITY_VERSION: 3.5
+      REMOTE_DEPLOY_MODULES_PATH: /home/yinglilu/opt/modules
+      REMOTE_DEPLOY_CONTAINERS_PATH: /home/yinglilu/opt/containers
+      
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: get repo name, tag verion 
+        run: |
+          echo ::set-env name=REPO_NAME::$(echo "${GITHUB_REPOSITORY}" | cut -d / -f 2)
+          echo ::set-env name=TAG_VERSION::${GITHUB_REF:10}
+    
+      - name: deploy to cc
+        run: |
+          # setup runner's ssh
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY_GRAHAM }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan ${REMOTE_HOST} >> ~/.ssh/known_hosts
+          
+          scp -r .deploy_scripts ${REMOTE_USER}@${REMOTE_HOST}:~
+
+          # deploy  
+          ssh ${REMOTE_USER}@${REMOTE_HOST} "bash -s" -- < .deploy_scripts/deploy_dockerhub_image_to_transparent_singularity_on_remote.sh ${REMOTE_SINGULARITY_VERSION} ${REMOTE_DEPLOY_MODULES_PATH} ${REMOTE_DEPLOY_CONTAINERS_PATH} ${REPO_NAME} ${TAG_VERSION} "docker://${GITHUB_REPOSITORY}:latest"  
+
+      - name: test deploy
+        run: |
+          ssh ${REMOTE_USER}@${REMOTE_HOST} "module load singularity/${REMOTE_SINGULARITY_VERSION} && module load ${REPO_NAME}/latest && binary"
