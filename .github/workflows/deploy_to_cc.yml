@@ -19,11 +19,11 @@ jobs:
     runs-on: ubuntu-18.04
     env:
       # change these variables to yours
-      REMOTE_USER: yinglilu
+      REMOTE_USER: akhanf
       REMOTE_HOST: graham.sharcnet.ca
       REMOTE_SINGULARITY_VERSION: 3.5
-      REMOTE_DEPLOY_MODULES_PATH: /home/yinglilu/opt/modules
-      REMOTE_DEPLOY_CONTAINERS_PATH: /home/yinglilu/opt/containers
+      REMOTE_DEPLOY_MODULES_PATH: /home/akhanf/opt/modules
+      REMOTE_DEPLOY_CONTAINERS_PATH: /home/akhanf/opt/containers
       
     steps:
       - name: checkout
