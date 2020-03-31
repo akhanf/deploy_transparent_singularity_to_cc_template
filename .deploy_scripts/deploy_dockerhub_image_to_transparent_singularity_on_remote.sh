@@ -35,7 +35,7 @@ singularity pull -F ${FULLPATH_TO_SIF} ${DOCKERHUB_IMAGE_LINK}
 chmod u+x ${DEPLOY_CONTAINERS_PATH}/.deploy_scripts/* 
 bash ~/.deploy_scripts/run_transparent_singularity.sh ${FULLPATH_TO_SIF} ${DEPLOY_MODULES_PATH}/${CONTAINER_NAME}
 
-# create a soft link ${CONTAINER_NAME}.sif at ${DEPLOY_CONTAINER_TAG_PATH}
+# create a soft link ${CONTAINER_NAME} in ${DEPLOY_CONTAINER_TAG_PATH}
 # purpose:
 #    'moudle load ${CONTAINER_NAME}/latest'
 #    '${CONTAINER_NAME}.sif arg1 arg2' will run Singularity %runscript section
