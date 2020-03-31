@@ -38,7 +38,7 @@ bash ~/.deploy_scripts/run_transparent_singularity.sh ${FULLPATH_TO_SIF} ${DEPLO
 # create a soft link ${CONTAINER_NAME} in ${DEPLOY_CONTAINER_TAG_PATH}
 # purpose:
 #    'moudle load ${CONTAINER_NAME}/latest'
-#    '${CONTAINER_NAME}.sif arg1 arg2' will run Singularity %runscript section
+#    '${CONTAINER_NAME} arg1 arg2' will run Singularity %runscript section
 ln -s ${FULLPATH_TO_SIF} ${DEPLOY_CONTAINER_TAG_PATH}/${CONTAINER_NAME}
 
 # add MODULEPATH to ~/.bashrc
