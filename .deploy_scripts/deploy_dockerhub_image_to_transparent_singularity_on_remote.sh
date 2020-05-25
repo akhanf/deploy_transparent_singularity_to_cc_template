@@ -30,9 +30,16 @@ FULLPATH_TO_SIF=${DEPLOY_CONTAINER_TAG_PATH}/${CONTAINER_NAME}_${TAG}.sif
 module load singularity/${SINGULARITY_VERSION}
 singularity pull -F ${FULLPATH_TO_SIF} ${DOCKERHUB_IMAGE_LINK}
 
+
 #transparent singularity
 chmod u+x ${DEPLOY_CONTAINERS_PATH}/.deploy_scripts/* 
 bash ~/.deploy_scripts/run_transparent_singularity.sh ${FULLPATH_TO_SIF} ${DEPLOY_MODULES_PATH}/${CONTAINER_NAME}
+
+# create a soft link ${CONTAINER_NAME} in ${DEPLOY_CONTAINER_TAG_PATH}
+# purpose:
+#    'moudle load ${CONTAINER_NAME}/latest'
+#    '${CONTAINER_NAME} arg1 arg2' will run Singularity %runscript section
+ln -s ${FULLPATH_TO_SIF} ${DEPLOY_CONTAINER_TAG_PATH}/${CONTAINER_NAME}
 
 # add MODULEPATH to ~/.bashrc
 if grep -xq "export MODULEPATH=${DEPLOY_MODULES_PATH}:\$MODULEPATH" ~/.bashrc #return 0 if exist

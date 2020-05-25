@@ -7,8 +7,10 @@
 #   test deploy
 #
 # require: github secretes
-#     SSH_KEY_GRAHAM
-#     note:SSH_KEY_GRAHAM is private key, the paired public key should be on REMOTE_HOST
+#    DOCKERHUB_USERNAME
+#    DOCKERHUB_PASSWORD
+#    SSH_KEY_GRAHAM
+#      note:SSH_KEY_GRAHAM is private key, the paired public key should be on REMOTE_HOST
 
 name: deploy_to_cc_and_test
 on:
@@ -34,6 +36,14 @@ jobs:
           echo ::set-env name=REPO_NAME::$(echo "${GITHUB_REPOSITORY}" | cut -d / -f 2)
           echo ::set-env name=TAG_VERSION::${GITHUB_REF:10}
     
+      - name: docker push tag version
+        run: |
+          # ${GITHUB_REPOSITORY}:latest was pushed by test.yml, there is no tag info at that number
+          docker pull ${GITHUB_REPOSITORY}:latest
+          docker tag ${GITHUB_REPOSITORY}:latest ${GITHUB_REPOSITORY}:${TAG_VERSION}
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+          docker push ${GITHUB_REPOSITORY}:${TAG_VERSION}
+
       - name: deploy to cc
         run: |
           # setup runner's ssh
