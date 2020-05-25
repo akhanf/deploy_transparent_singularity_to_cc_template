@@ -9,8 +9,13 @@
 # require: github secretes
 #    DOCKERHUB_USERNAME
 #    DOCKERHUB_PASSWORD
-#    SSH_KEY_GRAHAM
-#      note:SSH_KEY_GRAHAM is private key, the paired public key should be on REMOTE_HOST
+#    REMOTE_DEPLOY_HOST
+#    REMOTE_DEPLOY_USER
+#    REMOTE_DEPLOY_SSH_KEY
+#    REMOTE_DEPLOY_MODULES_PATH
+#    REMOTE_DEPLOY_CONTAINERS_PATH
+#    REMOTE_DEPLOY_SINGULARITY_VERSION
+#      note:REMOTE_DEPLOY_SSH_KEY is private key, the paired public key should be on REMOTE_HOST
 
 name: deploy_to_cc_and_test
 on:
@@ -19,14 +24,6 @@ on:
 jobs:
   deploy_to_cc:
     runs-on: ubuntu-18.04
-    env:
-      # change these variables to yours
-      REMOTE_USER: akhanf
-      REMOTE_HOST: graham.sharcnet.ca
-      REMOTE_SINGULARITY_VERSION: 3.5
-      REMOTE_DEPLOY_MODULES_PATH: /home/akhanf/opt/modules
-      REMOTE_DEPLOY_CONTAINERS_PATH: /home/akhanf/opt/containers
-      
     steps:
       - name: checkout
         uses: actions/checkout@v2
@@ -48,15 +45,15 @@ jobs:
         run: |
           # setup runner's ssh
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY_GRAHAM }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.REMOTE_DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan ${REMOTE_HOST} >> ~/.ssh/known_hosts
+          ssh-keyscan ${{ secrets.REMOTE_DEPLOY_HOST }} >> ~/.ssh/known_hosts
           
-          scp -r .deploy_scripts ${REMOTE_USER}@${REMOTE_HOST}:~
+          scp -r .deploy_scripts ${{ secrets.REMOTE_DEPLOY_USER }}@${{ secrets.REMOTE_DEPLOY_HOST }}:~
 
           # deploy  
-          ssh ${REMOTE_USER}@${REMOTE_HOST} "bash -s" -- < .deploy_scripts/deploy_dockerhub_image_to_transparent_singularity_on_remote.sh ${REMOTE_SINGULARITY_VERSION} ${REMOTE_DEPLOY_MODULES_PATH} ${REMOTE_DEPLOY_CONTAINERS_PATH} ${REPO_NAME} ${TAG_VERSION} "docker://${GITHUB_REPOSITORY}:latest"  
+          ssh ${{ secrets.REMOTE_DEPLOY_USER }}@${{ secrets.REMOTE_DEPLOY_HOST }} "bash -s" -- < .deploy_scripts/deploy_dockerhub_image_to_transparent_singularity_on_remote.sh ${REMOTE_DEPLOY_SINGULARITY_VERSION} ${REMOTE_DEPLOY_MODULES_PATH} ${REMOTE_DEPLOY_CONTAINERS_PATH} ${REPO_NAME} ${TAG_VERSION} "docker://${GITHUB_REPOSITORY}:latest"  
 
       - name: test deploy
         run: |
-          ssh ${REMOTE_USER}@${REMOTE_HOST} "module load singularity/${REMOTE_SINGULARITY_VERSION} && module load ${REPO_NAME}/latest && binary"
+          ssh ${{ secrets.REMOTE_DEPLOY_USER }}@${{ secrets.REMOTE_DEPLOY_HOST }} "module load singularity/${REMOTE_DEPLOY_SINGULARITY_VERSION} && module load ${REPO_NAME}/latest && binary"
