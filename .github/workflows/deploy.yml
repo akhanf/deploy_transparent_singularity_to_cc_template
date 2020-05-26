@@ -17,12 +17,12 @@
 #    REMOTE_DEPLOY_SINGULARITY_VERSION
 #      note:REMOTE_DEPLOY_SSH_KEY is private key, the paired public key should be on REMOTE_HOST
 
-name: deploy_to_cc_and_test
+name: deploy_remote_and_test
 on:
   release:
     types: [published]
 jobs:
-  deploy_to_cc:
+  deploy_remote:
     runs-on: ubuntu-18.04
     steps:
       - name: checkout
@@ -41,7 +41,7 @@ jobs:
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
           docker push ${GITHUB_REPOSITORY}:${TAG_VERSION}
 
-      - name: deploy to cc
+      - name: deploy to remote
         run: |
           # setup runner's ssh
           mkdir -p ~/.ssh
@@ -54,6 +54,6 @@ jobs:
           # deploy  
           ssh ${{ secrets.REMOTE_DEPLOY_USER }}@${{ secrets.REMOTE_DEPLOY_HOST }} "bash -s" -- < .deploy_scripts/deploy_dockerhub_image_to_transparent_singularity_on_remote.sh ${REMOTE_DEPLOY_SINGULARITY_VERSION} ${REMOTE_DEPLOY_MODULES_PATH} ${REMOTE_DEPLOY_CONTAINERS_PATH} ${REPO_NAME} ${TAG_VERSION} "docker://${GITHUB_REPOSITORY}:latest"  
 
-      - name: test deploy
+      - name: test deployed
         run: |
           ssh ${{ secrets.REMOTE_DEPLOY_USER }}@${{ secrets.REMOTE_DEPLOY_HOST }} "module load singularity/${REMOTE_DEPLOY_SINGULARITY_VERSION} && module load ${REPO_NAME}/latest && binary"
