@@ -52,7 +52,7 @@ jobs:
           scp -r .deploy_scripts ${{ secrets.REMOTE_DEPLOY_USER }}@${{ secrets.REMOTE_DEPLOY_HOST }}:~
 
           # deploy  
-          ssh ${{ secrets.REMOTE_DEPLOY_USER }}@${{ secrets.REMOTE_DEPLOY_HOST }} "bash -s" -- < .deploy_scripts/deploy_dockerhub_image_to_transparent_singularity_on_remote.sh ${REMOTE_DEPLOY_SINGULARITY_VERSION} ${REMOTE_DEPLOY_MODULES_PATH} ${REMOTE_DEPLOY_CONTAINERS_PATH} ${REPO_NAME} ${TAG_VERSION} "docker://${GITHUB_REPOSITORY}:latest"  
+          ssh ${{ secrets.REMOTE_DEPLOY_USER }}@${{ secrets.REMOTE_DEPLOY_HOST }} "bash -s" -- < .deploy_scripts/deploy_dockerhub_image_to_transparent_singularity_on_remote.sh ${{ secrets.REMOTE_DEPLOY_SINGULARITY_VERSION }} ${{ secrets.REMOTE_DEPLOY_MODULES_PATH }} ${{ secrets.REMOTE_DEPLOY_CONTAINERS_PATH }} ${REPO_NAME} ${TAG_VERSION} "docker://${GITHUB_REPOSITORY}:latest"  
 
       - name: test deployed
         run: |
