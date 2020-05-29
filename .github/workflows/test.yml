@@ -20,25 +20,26 @@ jobs:
   test:
     runs-on: ubuntu-18.04
     steps:
+      - uses: franzdiebold/github-env-vars-action@v1.0.0 # gets the GITHUB_REPOSITORY_NAME env var
       - name: checkout
         uses: actions/checkout@v2
         
       - name: test 
         run: chmod a+x binary && ./binary
    
-      - name: build docker image
-        run: |
-          docker build -t ${GITHUB_REPOSITORY}:latest .
+#      - name: build docker image
+#        run: |
+#          docker build -t ${GITHUB_REPOSITORY}:latest .
  
-#      - name: build and push docker with cache
-#        uses: whoan/docker-build-with-cache-action@v5
-#        with:
-#          username: ${{ secrets.DOCKERHUB_USERNAME }}
-#          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-#          image_name: deploy_transparent_singularity_to_cc_template
-        #  image_tag: latest
-        #  push_image_and_stages: true
-        #  pull_image_and_stages: true
+      - name: build and push docker with cache
+        uses: whoan/docker-build-with-cache-action@v5
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          image_name: ${GITHUB_REPOSITORY_NAME}
+          image_tag: latest
+          push_image_and_stages: true
+          pull_image_and_stages: true
 
       - name: Cache Singularity install
         id: cache-singularity
