@@ -28,9 +28,10 @@ jobs:
    
       - name: Set image names
         shell: bash
-        run: echo ::set-env name=IMG_ORG::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $1}')
-        run: echo ::set-env name=IMG_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
-        run: echo ::set-env name=IMG_TAG::latest #change this later to set tag based on branch or release tag
+        run: |
+          echo ::set-env name=IMG_ORG::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $1}')
+          echo ::set-env name=IMG_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+          echo ::set-env name=IMG_TAG::latest #change this later to set tag based on branch or release tag
 
       - name: Build Docker image
         run: |
