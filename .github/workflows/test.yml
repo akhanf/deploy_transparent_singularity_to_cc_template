@@ -31,10 +31,10 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          image_name: ${GITHUB_REPOSITORY}
-          image_tag: latest
-          push_image_and_stages: true
-          pull_image_and_stages: true
+          image_name: deploy_transparent_singularity_to_cc_template
+        #  image_tag: latest
+        #  push_image_and_stages: true
+        #  pull_image_and_stages: true
 
       - name: Set up Go 1.12
         uses: actions/setup-go@v1
