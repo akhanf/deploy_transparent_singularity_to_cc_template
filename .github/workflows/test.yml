@@ -20,42 +20,37 @@ jobs:
   test:
     runs-on: ubuntu-18.04
     steps:
-      - uses: franzdiebold/github-env-vars-action@v1.0.0 # gets the GITHUB_REPOSITORY_NAME env var
       - name: checkout
         uses: actions/checkout@v2
         
       - name: test 
         run: chmod a+x binary && ./binary
    
-#      - name: build docker image
-#        run: |
-#          docker build -t ${GITHUB_REPOSITORY}:latest .
- 
-      - name: build and push docker with cache
-        uses: whoan/docker-build-with-cache-action@v5
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          image_name: ${GITHUB_REPOSITORY_NAME}
-          image_tag: latest
-          push_image_and_stages: true
-          pull_image_and_stages: true
+      - name: Set image names
+        shell: bash
+        run: echo ::set-env name=IMG_ORG::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $1}')
+        run: echo ::set-env name=IMG_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+        run: echo ::set-env name=IMG_TAG::latest #change this later to set tag based on branch or release tag
 
-      - name: Cache Singularity install
+      - name: Build Docker image
+        run: |
+          docker build -t ${IMG_ORG}/${IMG_NAME}:${IMG_TAG} .
+
+      - name: Check Cache Singularity Install
         id: cache-singularity
         uses: actions/cache@v2
         with:
           path: /opt/singularity
           key: ${{ runner.os }}-singularity
 
-      - name: Set up Go 1.12
+      - name: Install Singularity Dependency Go
         if: steps.cache-singularity.outputs.cache-hit != 'true'
         uses: actions/setup-go@v1
         with:
           go-version: 1.12
         id: go
 
-      - name: Install Dependencies
+      - name: Install Singularity Dependencies
         if: steps.cache-singularity.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update && sudo apt-get install -y \
@@ -85,17 +80,30 @@ jobs:
           make -C builddir && \
           sudo make -C builddir install          
 
-      - name: Add singularity to path
+      - name: Add Singularity to path
         run: |
            echo "::add-path::/opt/singularity/bin"
 
-      - name: Try building container from local docker            
+      - name: Build Singularity image from local Docker
         run: |
-           singularity build test_container.sif docker-daemon://${GITHUB_REPOSITORY}:latest
-         
-      - name: Pull Container from docker hub
-        run: |
-          singularity pull docker://${GITHUB_REPOSITORY}:latest
+           singularity build ${IMG_ORG}_${IMG_NAME}_${IMG_TAG}.sif  docker-daemon://${IMG_ORG}/${IMG_NAME}:${IMG_TAG}
 
+      - name: Insert tests using singularity image here
+        run: |
+           singularity run ${IMG_ORG}_${IMG_NAME}_${IMG_TAG}.sif 
+ 
+      - name: Push Container to Docker Hub
+        run: |
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+          docker push ${IMG_ORG}/${IMG_NAME}:${IMG_TAG}
+
+      - name: Deploy singularity image to remote
+          # setup runner's ssh
+          mkdir -p ~/.ssh
+          echo "${{ secrets.REMOTE_DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan ${{ secrets.REMOTE_DEPLOY_HOST }} >> ~/.ssh/known_hosts
+          
+          scp -v ${IMG_ORG}_${IMG_NAME}_${IMG_TAG}.sif  ${{ secrets.REMOTE_DEPLOY_USER }}@${{ secrets.REMOTE_DEPLOY_HOST }}:${{ secrets.REMOTE_DEPLOY_CONTAINERS_PATH }}
 
 
