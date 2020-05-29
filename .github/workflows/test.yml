@@ -40,13 +40,22 @@ jobs:
         #  push_image_and_stages: true
         #  pull_image_and_stages: true
 
+      - name: Cache Singularity install
+        id: cache-singularity
+        uses: actions/cache@v2
+        with:
+          path: /opt/singularity
+          key: ${{ runner.os }}-singularity
+
       - name: Set up Go 1.12
+        if: steps.cache-singularity.outputs.cache-hit != 'true'
         uses: actions/setup-go@v1
         with:
           go-version: 1.12
         id: go
 
       - name: Install Dependencies
+        if: steps.cache-singularity.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update && sudo apt-get install -y \
           build-essential \
@@ -57,12 +66,6 @@ jobs:
           libseccomp-dev \
           pkg-config
 
-      - name: Cache Singularity install
-        id: cache-singularity
-        uses: actions/cache@v2
-        with:
-          path: /opt/singularity
-          key: ${{ runner.os }}-singularity
 
       - name: Install Singularity
         if: steps.cache-singularity.outputs.cache-hit != 'true'
