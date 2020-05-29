@@ -98,6 +98,7 @@ jobs:
           docker push ${IMG_ORG}/${IMG_NAME}:${IMG_TAG}
 
       - name: Deploy singularity image to remote
+        run: |
           # setup runner's ssh
           mkdir -p ~/.ssh
           echo "${{ secrets.REMOTE_DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
