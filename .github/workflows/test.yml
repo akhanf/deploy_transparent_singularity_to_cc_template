@@ -78,7 +78,9 @@ jobs:
           sudo make -C builddir install          
  
       - name: Try building container from local docker
+            
         run: |
+           echo "::add-path::/opt/singularity/bin"
            singularity build test_container.sif docker-daemon://${GITHUB_REPOSITORY}:latest
          
       - name: Pull Container from docker hub
