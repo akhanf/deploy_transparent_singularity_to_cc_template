@@ -89,9 +89,9 @@ jobs:
         run: |
            singularity build ${IMG_ORG}_${IMG_NAME}_${IMG_TAG}.sif  docker-daemon://${IMG_ORG}/${IMG_NAME}:${IMG_TAG}
 
-      - name: Insert tests using singularity image here
-        run: |
-           singularity run ${IMG_ORG}_${IMG_NAME}_${IMG_TAG}.sif 
+#      - name: Insert tests using singularity image here
+#        run: |
+#           singularity run ${IMG_ORG}_${IMG_NAME}_${IMG_TAG}.sif 
  
       - name: Push Container to Docker Hub
         run: |
