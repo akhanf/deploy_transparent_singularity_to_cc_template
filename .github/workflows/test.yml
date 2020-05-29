@@ -26,18 +26,15 @@ jobs:
       - name: test 
         run: chmod a+x binary && ./binary
     
-      - name: build docker image
-        run: |
-          docker build -t ${GITHUB_REPOSITORY}:latest .
-
-      - name: test docker image
-        run: |
-          docker images && docker run ${GITHUB_REPOSITORY}:latest binary
-
-      - name: docker push
-        run: |
-          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
-          docker push ${GITHUB_REPOSITORY}:latest
+      - name: build and push docker with cache
+        uses: whoan/docker-build-with-cache-action@v5
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          image_name: ${GITHUB_REPOSITORY}
+          image_tag: latest
+          push_image_and_stages: true
+          pull_image_and_stages: true
 
       - name: Set up Go 1.12
         uses: actions/setup-go@v1
@@ -56,7 +53,15 @@ jobs:
           libseccomp-dev \
           pkg-config
 
+      - name: Cache Singularity install
+        id: cache-singularity
+        uses: actions/cache@v2
+        with:
+          path: /opt/singularity
+          key: ${{ runner.os }}-singularity
+
       - name: Install Singularity
+        if: steps.cache-singularity.outputs.cache-hit != 'true'
         env:
           SINGULARITY_VERSION: 3.2.1
         run: |
@@ -68,16 +73,17 @@ jobs:
           wget -qO- https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz | \
           tar xzv && \
           cd singularity && \
-          ./mconfig -p /usr/local && \
+          ./mconfig -p /opt/singularity && \
           make -C builddir && \
           sudo make -C builddir install          
-          
-      - name: Pull Container
-        env:
-          OUTPUT_CONTAINER: container.sif
+ 
+      - name: Try building container from local docker
+        run: |
+           singularity build test_container.sif docker-daemon://${GITHUB_REPOSITORY}:latest
+         
+      - name: Pull Container from docker hub
         run: |
           singularity pull docker://${GITHUB_REPOSITORY}:latest
-
 
 
 
