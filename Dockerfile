@@ -9,4 +9,5 @@ COPY ./binary .
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV PATH=$DEPLOY_PATH:$PATH
 
-
+RUN apt-get update
+RUN apt install -y vim
