@@ -37,6 +37,27 @@ jobs:
         run: |
           docker build -t ${IMG_ORG}/${IMG_NAME}:${IMG_TAG} .
 
+      # insert testing here...
+
+      - name: Push Container to Docker Hub
+        run: |
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+          docker push ${IMG_ORG}/${IMG_NAME}:${IMG_TAG}
+
+  # we need this job because some hosts (compute canada) are unable to pull large images from docker hub (not enough tmp space, and cannot build on lustre)
+  deploy_remote: 
+    needs: test
+    runs-on: ubuntu-18.04
+    steps:
+
+      - name: Set image names
+        shell: bash
+        run: |
+          echo ::set-env name=IMG_ORG::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $1}')
+          echo ::set-env name=IMG_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+          echo ::set-env name=IMG_TAG::latest #change this later to set tag based on branch or release tag
+
+
       - name: Check Cache Singularity Install
         id: cache-singularity
         uses: actions/cache@v2
@@ -85,18 +106,9 @@ jobs:
         run: |
            echo "::add-path::/opt/singularity/bin"
 
-      - name: Build Singularity image from local Docker
+      - name: Build Singularity image from docker hub
         run: |
-           singularity build ${IMG_ORG}_${IMG_NAME}_${IMG_TAG}.sif  docker-daemon://${IMG_ORG}/${IMG_NAME}:${IMG_TAG}
-
-#      - name: Insert tests using singularity image here
-#        run: |
-#           singularity run ${IMG_ORG}_${IMG_NAME}_${IMG_TAG}.sif 
- 
-      - name: Push Container to Docker Hub
-        run: |
-          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
-          docker push ${IMG_ORG}/${IMG_NAME}:${IMG_TAG}
+           singularity build ${IMG_ORG}_${IMG_NAME}_${IMG_TAG}.sif  docker://${IMG_ORG}/${IMG_NAME}:${IMG_TAG}
 
       - name: Deploy singularity image to remote
         run: |
@@ -107,5 +119,6 @@ jobs:
           ssh-keyscan ${{ secrets.REMOTE_DEPLOY_HOST }} >> ~/.ssh/known_hosts
           
           scp -v ${IMG_ORG}_${IMG_NAME}_${IMG_TAG}.sif  ${{ secrets.REMOTE_DEPLOY_USER }}@${{ secrets.REMOTE_DEPLOY_HOST }}:${{ secrets.REMOTE_DEPLOY_CONTAINERS_PATH }}
+
 
 
